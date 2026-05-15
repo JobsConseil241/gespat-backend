@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AmortissementController;
+use App\Http\Controllers\Api\V1\AuditController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CampagneInventaireController;
 use App\Http\Controllers\Api\V1\CategorieController;
@@ -137,6 +138,12 @@ Route::prefix('v1')->group(function () {
         Route::prefix('reports')->group(function () {
             Route::get('immobilisations/excel', [ReportController::class, 'exportImmobilisationsExcel']);
             Route::get('immobilisations/pdf', [ReportController::class, 'etatPatrimoinePdf']);
+        });
+
+        // ===== AUDIT TRAIL =====
+        Route::prefix('audit')->group(function () {
+            Route::get('logs', [AuditController::class, 'index']);
+            Route::get('stats', [AuditController::class, 'stats']);
         });
     });
 });

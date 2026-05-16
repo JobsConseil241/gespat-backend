@@ -12,8 +12,29 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @group Authentification
+ *
+ * Endpoints liés à la session utilisateur (login, logout, profil courant).
+ */
 class AuthController extends Controller
 {
+    /**
+     * Connexion
+     *
+     * Authentifie un utilisateur et retourne un token Bearer Sanctum.
+     *
+     * @unauthenticated
+     *
+     * @response 200 {
+     *   "token": "1|aBcDeFgHiJ...",
+     *   "user": {"id": 1, "matricule": "ADM-0001", "email": "admin@gespat.local", "nom_complet": "Système Administrateur"}
+     * }
+     * @response 422 {
+     *   "message": "The given data was invalid.",
+     *   "errors": {"email": ["Identifiants invalides."]}
+     * }
+     */
     public function login(LoginRequest $request): JsonResponse
     {
         $key = 'login:'.$request->ip();

@@ -100,3 +100,98 @@ it('valide une cession et marque l\'immo cede', function () {
 
     expect($immo->fresh()->statut)->toBe('cede');
 });
+
+// ===== TRANSITIONS RESTANTES =====
+it('valide une perte → statut perdu', function () {
+    actingAsAdmin();
+    $immo = Immobilisation::factory()->create(['statut' => 'actif']);
+    $sortie = Sortie::create([
+        'immobilisation_id' => $immo->id, 'type_sortie' => 'perte',
+        'date_decision' => now(), 'motif' => 'Perte constatée',
+        'statut' => 'proposee',
+    ]);
+    postJson("/api/v1/sorties/{$sortie->id}/valider")->assertOk();
+    expect($immo->fresh()->statut)->toBe('perdu');
+});
+
+it('valide un vol → statut vole', function () {
+    actingAsAdmin();
+    $immo = Immobilisation::factory()->create(['statut' => 'actif']);
+    $sortie = Sortie::create([
+        'immobilisation_id' => $immo->id, 'type_sortie' => 'vol',
+        'date_decision' => now(), 'motif' => 'Vol déclaré',
+        'statut' => 'proposee',
+    ]);
+    postJson("/api/v1/sorties/{$sortie->id}/valider")->assertOk();
+    expect($immo->fresh()->statut)->toBe('vole');
+});
+
+it('valide une destruction → statut detruit', function () {
+    actingAsAdmin();
+    $immo = Immobilisation::factory()->create(['statut' => 'actif']);
+    $sortie = Sortie::create([
+        'immobilisation_id' => $immo->id, 'type_sortie' => 'destruction',
+        'date_decision' => now(), 'motif' => 'Détruit en accident',
+        'statut' => 'proposee',
+    ]);
+    postJson("/api/v1/sorties/{$sortie->id}/valider")->assertOk();
+    expect($immo->fresh()->statut)->toBe('detruit');
+});
+
+it('refuse une double validation de sortie', function () {
+    actingAsAdmin();
+    $immo = Immobilisation::factory()->create();
+    $sortie = Sortie::create([
+        'immobilisation_id' => $immo->id, 'type_sortie' => 'reforme',
+        'date_decision' => now(), 'motif' => 'X',
+        'statut' => 'executee',
+    ]);
+    postJson("/api/v1/sorties/{$sortie->id}/valider")->assertStatus(422);
+});
+
+it('endpoint store /sorties crée une sortie en statut proposee', function () {
+    actingAsAdmin();
+    $immo = Immobilisation::factory()->create();
+
+    postJson('/api/v1/sorties', [
+        'immobilisation_id' => $immo->id,
+        'type_sortie' => 'reforme',
+        'date_decision' => '2026-05-15',
+        'motif' => 'Hors service',
+    ])->assertCreated()
+        ->assertJsonPath('data.statut', 'proposee')
+        ->assertJsonPath('data.type_sortie', 'reforme');
+
+    $this->assertDatabaseHas('sorties', ['immobilisation_id' => $immo->id, 'statut' => 'proposee']);
+});
+
+it('refus d\'un mouvement → statut refuse, immobilisation inchangée', function () {
+    actingAsAdmin();
+    $site1 = Site::factory()->create();
+    $site2 = Site::factory()->create();
+    $immo = Immobilisation::factory()->create(['site_id' => $site1->id]);
+    $mvt = Mouvement::create([
+        'immobilisation_id' => $immo->id,
+        'type_mouvement' => 'transfert',
+        'date_mouvement' => now(),
+        'site_origine_id' => $site1->id,
+        'site_destination_id' => $site2->id,
+        'statut' => 'propose',
+    ]);
+
+    postJson("/api/v1/mouvements/{$mvt->id}/refuser")->assertOk();
+
+    expect($mvt->fresh()->statut)->toBe('refuse');
+    expect($immo->fresh()->site_id)->toBe($site1->id); // pas de transfert appliqué
+});
+
+it('refuse la double-action sur un mouvement déjà traité', function () {
+    actingAsAdmin();
+    $immo = Immobilisation::factory()->create();
+    $mvt = Mouvement::create([
+        'immobilisation_id' => $immo->id, 'type_mouvement' => 'transfert',
+        'date_mouvement' => now(), 'statut' => 'refuse',
+    ]);
+
+    postJson("/api/v1/mouvements/{$mvt->id}/refuser")->assertStatus(422);
+});

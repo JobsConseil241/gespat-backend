@@ -117,6 +117,26 @@ it('push détecte un conflit de version', function () {
         ->and($resp->json('data.conflicts.0.raison'))->toBe('version_obsolete');
 });
 
+it('pull avec ?since ne renvoie que les fiches mises à jour après la date', function () {
+    actingAsRole('inventoriste');
+    [$campagne] = setupCampagneAvecFiches(2);
+
+    // Marque les deux fiches "anciennes"
+    \App\Models\FicheInventaire::where('campagne_id', $campagne->id)
+        ->update(['updated_at' => now()->subDays(7)]);
+
+    // Met à jour une seule fiche maintenant
+    $ficheRecente = $campagne->fiches()->first();
+    $ficheRecente->touch();
+
+    // Format Y-m-d H:i:s pour éviter les soucis d'encodage du + dans la TZ
+    $cutoff = urlencode(now()->subDay()->format('Y-m-d H:i:s'));
+    $resp = getJson("/api/v1/sync/campagnes/{$campagne->id}/pull?device_id=t&since={$cutoff}")
+        ->assertOk();
+
+    expect($resp->json('data.fiches'))->toHaveCount(1);
+});
+
 it('push crée une fiche de découverte pour un bien sans fiche pré-générée', function () {
     actingAsRole('inventoriste');
     [$campagne] = setupCampagneAvecFiches(0);

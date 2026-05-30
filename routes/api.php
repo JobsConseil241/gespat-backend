@@ -24,7 +24,9 @@ use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
-    Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+    // 30 tentatives par minute par IP — protège contre le brute-force tout en
+    // laissant respirer les suites E2E (~11 tests = 11 logins par worker).
+    Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
 
     Route::middleware('auth:sanctum')->group(function () {
         // ===== AUTH =====

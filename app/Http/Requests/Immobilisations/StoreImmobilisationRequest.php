@@ -11,6 +11,20 @@ class StoreImmobilisationRequest extends FormRequest
         return $this->user()?->can('immobilisations.create') ?? false;
     }
 
+    /**
+     * Aligne les nullables sur les defaults SQL avant validation : les colonnes
+     * NOT NULL avec default(0) doivent recevoir 0, pas null, sinon la contrainte
+     * PostgreSQL est violée.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'valeur_acquisition' => $this->valeur_acquisition ?? 0,
+            'valeur_residuelle' => $this->valeur_residuelle ?? 0,
+            'devise' => $this->devise ?: 'XAF',
+        ]);
+    }
+
     public function rules(): array
     {
         return [

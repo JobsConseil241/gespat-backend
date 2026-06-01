@@ -1,66 +1,183 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# GESPAT — Backend API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API REST de la plateforme **GESPAT** (Gestion du patrimoine mobilier et immobilier) — codification, inventaire mobile, immobilisations, amortissements SYSCOHADA, rapprochement comptable, reporting.
 
-## About Laravel
+> **Maître d'œuvre** : MRTECH — MEBODO Richard Aristide
+> **Stack** : Laravel 11 · PHP 8.3 · PostgreSQL 16 · Redis · Sanctum
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Vue d'ensemble
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Métrique | Valeur |
+|---|---|
+| Tables PostgreSQL | 45 |
+| Routes API (`/api/v1/*`) | ~77 |
+| Contrôleurs | 21 |
+| Services métier | 4 |
+| Tests Pest | **111** (317 assertions) |
+| Couverture fonctionnelle | Phase 1 + Phase 2 du spec |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Modules
 
-## Learning Laravel
+| # | Module | Endpoints clés |
+|---|---|---|
+| 0 | **Administration** | `/users`, `/roles`, `/audit/logs`, `/audit/stats` |
+| 1 | **Référentiel** | `/sites`, `/localisations`, `/services`, `/categories`, `/fournisseurs` |
+| 2 | **Campagnes d'inventaire** | `/campagnes`, `/campagnes/{id}/generer-fiches`, `/sync/pull`, `/sync/push`, `/sync/scanner` |
+| 3 | **Codification & étiquetage** | `/codification/plans`, `/codification/previsualiser`, `/etiquettes/lots`, `/etiquettes/lots/{id}/pdf` |
+| 4 | **Immobilisations + cycle de vie** | `/immobilisations`, `/mouvements`, `/sorties`, `/maintenances` |
+| 5 | **Rapprochement comptable** | `/comptabilite/imports`, `/comptabilite/imports/{id}/matcher`, `/comptabilite/reconciliation` |
+| 6 | **Reporting** | `/dashboard/kpi`, `/dashboard/patrimoine-par-categorie/site/statut`, `/reports/immobilisations/excel,pdf` |
+|   | **Amortissements SYSCOHADA** | `/amortissements/simuler`, `/calculer-tous`, `/valider`, `/etat/{exercice}` |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Packages clés
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- `laravel/sanctum` — auth API token
+- `laravel/horizon` — queue dashboard Redis
+- `spatie/laravel-permission` — RBAC (8 rôles, 52 permissions)
+- `owen-it/laravel-auditing` — audit trail automatique sur tous les modèles métier
+- `picqer/php-barcode-generator` — code-barres CODE128
+- `endroid/qr-code` — QR codes signés HMAC
+- `barryvdh/laravel-dompdf` — PDF (planches d'étiquettes A4 Avery, états patrimoine)
+- `maatwebsite/excel` — import Excel comptable, export inventaire
+- `knuckleswtf/scribe` — documentation OpenAPI 3.0 auto-générée
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Démarrage local
 
-## Laravel Sponsors
+### Prérequis
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- PHP 8.3+ (`brew install php@8.3` ou MAMP)
+- Composer 2.x
+- PostgreSQL 16+ (`brew install postgresql@16`)
+- Redis (`brew install redis`)
 
-### Premium Partners
+### Installation
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+```bash
+# 1. Cloner
+git clone https://github.com/JobsConseil241/gespat-backend.git
+cd gespat-backend
 
-## Contributing
+# 2. Dépendances
+composer install
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 3. Configuration
+cp .env.example .env
+php artisan key:generate
 
-## Code of Conduct
+# 4. Base de données
+psql postgres -c "CREATE USER gespat WITH PASSWORD 'gespat';"
+psql postgres -c "CREATE DATABASE gespat OWNER gespat;"
+psql postgres -c "CREATE DATABASE gespat_test OWNER gespat;"
+php artisan migrate --seed
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# 5. Démarrer
+php artisan serve --host=127.0.0.1 --port=8000
+```
 
-## Security Vulnerabilities
+L'API est sur **http://127.0.0.1:8000/api/v1**.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Comptes de démo (seedés)
 
-## License
+```
+admin@gespat.local      / ChangeMe!2026  (super_admin)
+patrimoine@gespat.local / ChangeMe!2026  (gestionnaire_patrimoine)
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+⚠️ **À changer immédiatement en production.**
+
+## Tests
+
+```bash
+./vendor/bin/pest                            # toute la suite
+./vendor/bin/pest --filter=Amortissement     # un fichier
+./vendor/bin/pest --coverage                 # avec couverture
+```
+
+13 fichiers de tests Feature couvrant chaque module :
+
+```
+Auth · Site · Fournisseur · Categorie
+Immobilisation · MouvementSortie · Maintenance · Amortissement
+Codification · Etiquette · Comptabilite
+CampagneInventaire · MobileSync
+Dashboard · Audit · UserManagement
+```
+
+## Architecture
+
+```
+app/
+├── Http/
+│   ├── Controllers/Api/V1/      # 21 contrôleurs RESTful
+│   ├── Requests/                # Form requests par module
+│   └── Resources/               # API Resources (sérialisation)
+├── Models/                       # Eloquent + Auditable + SoftDeletes
+├── Services/
+│   ├── Amortissement/           # Calcul SYSCOHADA linéaire + dégressif
+│   ├── Codification/            # Génération codes + QR/barcode
+│   └── Comptabilite/            # Matching auto (3 stratégies)
+├── Exports/                      # maatwebsite/excel
+├── Imports/                      # Import écritures comptables
+config/
+├── permission.php                # Spatie config
+├── audit.php                     # owen-it config
+├── gespat.php                    # Paramètres métier (codification, HMAC…)
+database/
+├── migrations/                   # 30 migrations
+├── seeders/                      # RoleSeeder, ReferentielSeeder, CodificationSeeder, AdminUserSeeder
+├── factories/                    # Factories pour les tests
+routes/
+└── api.php                       # Toutes les routes sous /api/v1
+```
+
+## RBAC — 8 rôles seedés (52 permissions)
+
+| Rôle | Périmètre |
+|---|---|
+| `super_admin` | tout |
+| `admin_patrimoine` | tout sauf paramétrage système |
+| `gestionnaire_patrimoine` | CRUD biens, campagnes, étiquettes, mouvements |
+| `inventoriste` | scan terrain, saisie fiches, lecture |
+| `comptable` | imports, matching, validation amortissements |
+| `auditeur_lecture` | lecture seule + audit logs |
+| `chef_service` | lecture biens du service, validation transferts |
+| `agent_simple` | lecture biens sous responsabilité |
+
+## Documentation API
+
+Scribe expose la doc auto-générée :
+
+```bash
+php artisan scribe:generate
+```
+
+- HTML interactif : `http://127.0.0.1:8000/docs`
+- OpenAPI 3.0 : `http://127.0.0.1:8000/docs.openapi`
+- Collection Postman : `http://127.0.0.1:8000/docs.postman`
+
+## Déploiement production
+
+Voir `.env.example` pour les variables. Points d'attention :
+
+- `APP_DEBUG=false` impératif
+- `APP_KEY` régénéré (`php artisan key:generate`)
+- `GESPAT_HMAC_SECRET` régénéré (`openssl rand -hex 32`)
+- HTTPS obligatoire (Let's Encrypt ou certif commercial)
+- `SANCTUM_STATEFUL_DOMAINS` ajusté au domaine frontend
+- `config/cors.php` whitelist du frontend
+- Throttle `/auth/login` : ajusté à `10,1` en prod (actuellement `30,1` pour la CI E2E)
+- Cron Laravel Scheduler :
+  ```
+  * * * * * cd /path/to/backend && php artisan schedule:run >> /dev/null 2>&1
+  ```
+- `php artisan config:cache route:cache view:cache` après chaque déploiement
+- Backup quotidien `pg_dump` + rétention ≥ 30 jours (obligation OHADA 10 ans)
+
+## Surfaces liées
+
+- Frontend Vue 3 : https://github.com/JobsConseil241/gespat-frontend
+- Mobile Flutter : https://github.com/JobsConseil241/gespat-mobile (privé)
+
+## Licence
+
+Propriétaire — MRTECH / Commanditaire. Tous droits réservés.

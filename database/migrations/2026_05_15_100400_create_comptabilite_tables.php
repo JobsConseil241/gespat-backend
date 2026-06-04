@@ -44,7 +44,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('statut_matching');
-            $table->index('numero_immobilisation_compta');
+            $table->index('numero_immobilisation_compta', 'lci_num_immo_compta_index');
         });
 
         Schema::create('etats_reconciliation', function (Blueprint $table) {
